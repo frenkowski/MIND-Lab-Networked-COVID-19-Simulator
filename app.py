@@ -505,7 +505,7 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                         use_random_seed = True,
                         seed = 0)
         
-        fp_in = Path("{}\\nets.pickle".format(str(path)))
+        fp_in = Path("network_dumps/nets.pickle")
         nets = list()
         with open(fp_in, "rb") as f:
             nets = pickle.load(f)
@@ -595,7 +595,7 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                         use_random_seed = True,
                         seed = 0)
         
-        fp_in = Path("{}\\nets.pickle".format(str(path_no_rest)))
+        fp_in = Path("network_dumps_no_rest/nets.pickle")
         nets = list()
         with open(fp_in, "rb") as f:
             nets = pickle.load(f)
