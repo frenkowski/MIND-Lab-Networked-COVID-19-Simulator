@@ -1,6 +1,6 @@
 pycairo==1.18.0
 pandas==0.24.2
-ctns==0.2
+ctns==0.2.3
 networkx==2.4
 dash_gif_component==1.0.2
 dash==1.11.0
