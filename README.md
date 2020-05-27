@@ -1,1 +1,1 @@
-# mind-lab-1505-simulator
+# MIND-Lab-Networked-COVID-19-Simulator
