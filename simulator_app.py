@@ -195,17 +195,6 @@ form = dbc.Card(
         dbc.FormGroup(
             [   
             
-            dbc.Label("Save results on file:"),
-            dbc.Checklist(
-                    options=[
-                        {"label": "", "value": 1},
-                    ],
-                    value=[1],
-                    id="save_result",
-                    switch=True,
-                ),
-
-            html.Br(),
             dbc.Label("Type of dump:"),
             dcc.RadioItems(id="dump_type",
                 options=[
@@ -537,12 +526,11 @@ app.layout = dbc.Container(
         State('n_test','value'),
         State('policy_test','value'),
         State('contact_tracking_efficiency', 'value'),
-        State('save_result', 'value'),
         State('dump_type', 'value'),
         State('name_file', 'value')]
 )
 
-def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infected_nodes, incubation_days, infection_duration, R_0, initial_day_restriction, restriction_duration, social_distance_strictness, restriction_decreasing, n_test , policy_test, contact_tracking_efficiency, save_result, dump_type, name_file):
+def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infected_nodes, incubation_days, infection_duration, R_0, initial_day_restriction, restriction_duration, social_distance_strictness, restriction_decreasing, n_test , policy_test, contact_tracking_efficiency, dump_type, name_file):
     """
     Execute the simulations (with and without restriction) and return graphics with comparison and statistics. Save simulation results and parameters in the folder "simulator_results/" in .pickle file format (overwrite if files already exist)
 
@@ -605,17 +593,18 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
     # check to avoid first running at the launch of the app and on refresh page
     if n_clicks is not None:
 
-        save = False
-        if save_result == [1]:
-            save = True
 
         decrease = False
         if restriction_decreasing == [1]:
             decrease = True
 
+        # create dir
+        if not os.path.exists("simulator_results"):
+            os.mkdir("simulator_results")
+
         path = Path("simulator_results/" + str(name_file))
          
-        nets = run_simulation( use_steps = True,
+        run_simulation( use_steps = True,
                         n_of_families = n_of_families, 
                         number_of_steps = number_of_steps,
                         incubation_days = incubation_days,
@@ -632,8 +621,8 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                         path = str(path),
                         use_random_seed = True,
                         seed = 0,
-                        dump = save,
-                        dump_type = dump_type)
+                        dump_type = dump_type,
+                        )
         
         # list of data to plot
         S_rest = []
@@ -646,36 +635,56 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
         T_rest = []
         T_pos = []
         
-        # get daily count of peple status
-        for day in range(0, len(nets)):
-            G = nets[day]
-            report = Counter(G.vs["agent_status"])
-            s = report["S"]
-            e = report["E"]
-            i = report["I"]
-            r = report["R"]
-            d = report["D"]
-            tested = 0
-            quarantined = 0
-            positive = 0
-            for node in G.vs:
-                if node["test_result"] != -1:
-                    tested += 1
-                if node["test_result"] == 1:
-                    positive += 1
-                if node["quarantine"] != 0:
-                    quarantined += 1
-                    
-            S_rest.append(s)
-            E_rest.append(e)
-            I_rest.append(i)
-            R_rest.append(r)
-            D_rest.append(d)
-            tot_rest.append(s + e + i + r +d)
-            
-            Q_rest.append(quarantined)
-            T_rest.append(tested)
-            T_pos.append(positive)
+        if dump_type == 'full':
+            dump_full = dict()
+            nets = list()
+            with open(str(path)+'.pickle', "rb") as f:
+                dump_full = pickle.load(f)
+                nets = dump_full['nets']
+            # get daily count of peple status
+            for day in range(0, len(nets)):
+                G = nets[day]
+                report = Counter(G.vs["agent_status"])
+                s = report["S"]
+                e = report["E"]
+                i = report["I"]
+                r = report["R"]
+                d = report["D"]
+                tested = 0
+                quarantined = 0
+                positive = 0
+                for node in G.vs:
+                    if node["test_result"] != -1:
+                        tested += 1
+                    if node["test_result"] == 1:
+                        positive += 1
+                    if node["quarantine"] != 0:
+                        quarantined += 1
+                        
+                S_rest.append(s)
+                E_rest.append(e)
+                I_rest.append(i)
+                R_rest.append(r)
+                D_rest.append(d)
+                tot_rest.append(s + e + i + r +d)
+                
+                Q_rest.append(quarantined)
+                T_rest.append(tested)
+                T_pos.append(positive)
+
+        else:
+            dump_light = dict()
+            with open(str(path)+'.pickle', "rb") as f:
+                dump_light = pickle.load(f)
+            S_rest = dump_light['S']
+            I_rest = dump_light['I']
+            E_rest = dump_light['E']
+            R_rest = dump_light['R']
+            D_rest = dump_light['D']
+            tot_rest = dump_light['total']
+            Q_rest = dump_light['quarantined']
+            T_rest = dump_light['tested']
+            T_pos = dump_light['positive']
 
             
             
@@ -684,26 +693,29 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
         # list of output to return
         outputs = []
 
-        graph_sim = {'data': [ {'x': list(range(1, len(S_rest) +1)), 'y': S_rest, 'type': 'line', 'name': 'S', 'marker' : {'color': 'Blue'}},
-                         {'x': list(range(1,len(E_rest) +1)), 'y': E_rest, 'type': 'line', 'name': 'E', 'marker' : {'color': 'Orange'}},
-                         {'x': list(range(1,len(I_rest) +1)), 'y': I_rest, 'type': 'line', 'name': 'I', 'marker' : {'color': 'Red'}},
-                         {'x': list(range(1, len(R_rest) +1)), 'y': R_rest, 'type': 'line', 'name': 'R', 'marker' : {'color': 'Green'}},
-                         {'x': list(range(1, len(D_rest) +1)), 'y': D_rest, 'type': 'line', 'name': 'deceduti', 'marker' : {'color': 'Black'}},
-                         {'x': list(range(1, len(tot_rest) +1)), 'y': tot_rest, 'type': 'line', 'name': 'Total'},
-                         {'x': [initial_day_restriction, initial_day_restriction], 'y':[0, tot_rest[0]], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Begin restriction'},
-                         {'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, tot_rest[0]], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'},
-                         ],
-               'layout': {
+        graph_sim = dict({'data': [],
+                'layout': {
                    'title': 'Contacts network model with restriction',
                    'xaxis':{'title':'Day'},
                    'yaxis':{'title':'Count'}
                }
-              }
+               })
+
+        graph_sim['data'].append({'x': list(range(1, len(S_rest) +1)), 'y': S_rest,  'name': 'S', 'marker' : {'color': 'Blue'}})
+        graph_sim['data'].append({'x': list(range(1,len(E_rest) +1)), 'y': E_rest,  'name': 'E', 'marker' : {'color': 'Orange'}})
+        graph_sim['data'].append({'x': list(range(1,len(I_rest) +1)), 'y': I_rest,  'name': 'I', 'marker' : {'color': 'Red'}})
+        graph_sim['data'].append({'x': list(range(1, len(R_rest) +1)), 'y': R_rest,  'name': 'R', 'marker' : {'color': 'Green'}})
+        graph_sim['data'].append({'x': list(range(1, len(D_rest) +1)), 'y': D_rest,  'name': 'deceduti', 'marker' : {'color': 'Black'}})
+        graph_sim['data'].append({'x': list(range(1, len(tot_rest) +1)), 'y': tot_rest, 'name': 'Total'})
+        graph_sim['data'].append({'x': [initial_day_restriction, initial_day_restriction], 'y':[0, tot_rest[0]], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Begin restriction'})
+        graph_sim['data'].append({'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, tot_rest[0]], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'})
+                         
+               
        
         
         path_no_rest = Path("simulator_results/" + str(name_file) + "no_restr")
            
-        nets = run_simulation( use_steps = True,
+        run_simulation( use_steps = True,
                         n_of_families = n_of_families, 
                         number_of_steps = number_of_steps,
                         incubation_days = incubation_days,
@@ -720,42 +732,58 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                         path = str(path_no_rest),
                         use_random_seed = True,
                         seed = 0,
-                        dump = save,
-                        dump_type = dump_type)
+                        dump_type = dump_type,
+                        )
         
-        # daily count
+         # daily count
         S = []
         I = []
         E = []
         R = []
         D = []
         tot = []
-
-        
-        for day in range(0, len(nets)):
-            G = nets[day]
-            report = Counter(G.vs["agent_status"])
-            s = report["S"]
-            e = report["E"]
-            i = report["I"]
-            r = report["R"]
-            d = report["D"]
+        if dump_type == 'full':
+            dump_full = dict()
+            nets = list()
+            with open(str(path_no_rest) +'.pickle', "rb") as f:
+                dump_full = pickle.load(f)
+                nets = dump_full['nets']
+            for day in range(0, len(nets)):
+                G = nets[day]
+                report = Counter(G.vs["agent_status"])
+                s = report["S"]
+                e = report["E"]
+                i = report["I"]
+                r = report["R"]
+                d = report["D"]
+                
+                        
+                S.append(s)
+                E.append(e)
+                I.append(i)
+                R.append(r)
+                D.append(d)
+                tot.append(s + e + i + r +d)
+        else:
+            dump_light = dict()
+            with open(str(path_no_rest) +'.pickle', "rb") as f:
+                dump_light = pickle.load(f)
+            S = dump_light['S']
+            I = dump_light['I']
+            E = dump_light['E']
+            R = dump_light['R']
+            D = dump_light['D']
+            tot = dump_light['total']
             
-                    
-            S.append(s)
-            E.append(e)
-            I.append(i)
-            R.append(r)
-            D.append(d)
-            tot.append(s + e + i + r +d)
+
             
 
-        graph_sim_without_restr = {'data': [ {'x': list(range(1, len(S) +1)), 'y': S, 'type': 'line', 'name': 'S', 'marker' : {'color': 'Blue'}},
-                         {'x': list(range(1,len(E) +1)), 'y': E, 'type': 'line', 'name': 'E', 'marker' : {'color': 'Orange'}},
-                         {'x': list(range(1,len(I) +1)), 'y': I, 'type': 'line', 'name': 'I', 'marker' : {'color': 'Red'}},
-                         {'x': list(range(1, len(R) +1)), 'y': R, 'type': 'line', 'name': 'R', 'marker' : {'color': 'Green'}},
-                         {'x': list(range(1, len(D) +1)), 'y': D, 'type': 'line', 'name': 'deceduti', 'marker' : {'color': 'Black'}},
-                         {'x': list(range(1, len(tot) +1)), 'y': tot, 'type': 'line', 'name': 'Total'},
+        graph_sim_without_restr = {'data': [ {'x': list(range(1, len(S) +1)), 'y': S, 'name': 'S', 'marker' : {'color': 'Blue'}},
+                         {'x': list(range(1,len(E) +1)), 'y': E, 'name': 'E', 'marker' : {'color': 'Orange'}},
+                         {'x': list(range(1,len(I) +1)), 'y': I, 'name': 'I', 'marker' : {'color': 'Red'}},
+                         {'x': list(range(1, len(R) +1)), 'y': R, 'name': 'R', 'marker' : {'color': 'Green'}},
+                         {'x': list(range(1, len(D) +1)), 'y': D, 'name': 'deceduti', 'marker' : {'color': 'Black'}},
+                         {'x': list(range(1, len(tot) +1)), 'y': tot, 'name': 'Total'},
                          {'x': [initial_day_restriction, initial_day_restriction], 'y':[0, tot[0]], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Begin restriction'},
                          {'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, tot[0]], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'},
                          ],
@@ -780,8 +808,8 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                 inf_rest.append(0)
 
          # con e senza restrizioni
-        graph_infected = {'data': [{'x': list(range(1,len(I) +1)), 'y': inf, 'type': 'line', 'name': 'Without restriction'},
-                                 {'x': list(range(1,len(I) +1)), 'y': inf_rest, 'type': 'line', 'name': 'With restriction'},
+        graph_infected = {'data': [{'x': list(range(1,len(I) +1)), 'y': inf, 'name': 'Without restriction'},
+                                 {'x': list(range(1,len(I) +1)), 'y': inf_rest, 'name': 'With restriction'},
                                  {'x': [initial_day_restriction, initial_day_restriction], 'y':[0, max(inf + inf_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Begin restriction'},
                                  {'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, max(inf + inf_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'},
                          
@@ -800,8 +828,8 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
             while(len(D_rest) > len(D)):
                 D.append(D[-1])
                
-        graph_dead = {'data': [{'x': list(range(1,len(D) +1)), 'y': D, 'type': 'line', 'name': 'Without restriction'},
-                                 {'x': list(range(1,len(D) +1)), 'y': D_rest, 'type': 'line', 'name': 'With restriction'},
+        graph_dead = {'data': [{'x': list(range(1,len(D) +1)), 'y': D, 'name': 'Without restriction'},
+                                 {'x': list(range(1,len(D) +1)), 'y': D_rest, 'name': 'With restriction'},
                                  {'x': [initial_day_restriction, initial_day_restriction], 'y':[0, max(D + D_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Begin restriction'},
                                  {'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, max(D + D_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'},
                          
@@ -834,8 +862,8 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                 dead_giorn_rest.append(0)
 
  
-        graph_Inf_daily = {'data': [{'x': list(range(1,len(I) +1)), 'y': inf_giorn, 'type': 'line', 'name': 'Without restriction'},
-                                 {'x': list(range(1,len(I) +1)), 'y': inf_giorn_rest, 'type': 'line', 'name': 'With restriction'},
+        graph_Inf_daily = {'data': [{'x': list(range(1,len(I) +1)), 'y': inf_giorn, 'name': 'Without restriction'},
+                                 {'x': list(range(1,len(I) +1)), 'y': inf_giorn_rest, 'name': 'With restriction'},
                                  {'x': [initial_day_restriction, initial_day_restriction], 'y':[0, max(inf_giorn + inf_giorn_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Begin restriction'},
                                  {'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, max(inf_giorn + inf_giorn_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'},
                          
@@ -846,8 +874,8 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                           }
                }
                
-        graph_dead_daily = {'data': [{'x': list(range(1,len(D) +1)), 'y': dead_giorn, 'type': 'line', 'name': 'Without restriction'},
-                                 {'x': list(range(1,len(D) +1)), 'y': dead_giorn_rest, 'type': 'line', 'name': 'With restriction'},
+        graph_dead_daily = {'data': [{'x': list(range(1,len(D) +1)), 'y': dead_giorn, 'name': 'Without restriction'},
+                                 {'x': list(range(1,len(D) +1)), 'y': dead_giorn_rest, 'name': 'With restriction'},
                                  {'x': [initial_day_restriction, initial_day_restriction], 'y':[0, max(dead_giorn + dead_giorn_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Inizio restrizione'},
                                  {'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, max(dead_giorn + dead_giorn_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'},
                          
@@ -878,7 +906,7 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
 
         graph_test = {'data': [{'x': list(range(1,len(T_rest) +1)), 'y': T_rest, 'type': 'bar', 'name': 'Test made'},
                                  {'x': list(range(1,len(T_rest) +1)), 'y': T_pos, 'type': 'bar', 'name': 'Positive test'},
-                                 {'x': list(range(1,len(T_rest) +1)), 'y': Q_rest, 'type': 'line', 'name': 'Quarantine'},
+                                 {'x': list(range(1,len(T_rest) +1)), 'y': Q_rest, 'name': 'Quarantine'},
     
                                  ],
                 'layout': {'title': 'Comparison quarantine test made and positive test',
@@ -888,7 +916,18 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
        
 
         outputs = [graph_sim, graph_sim_without_restr, graph_infected, graph_dead, graph_Inf_daily, graph_dead_daily, graph_total_infected, graph_test, {'display': 'block'}, {'display': 'block'}, {'display': 'block'},{'display': 'block'},{'display': 'block'},{'display': 'block'},{'display': 'block'},{'display': 'block'}]
-        
+        names = ['graph_sim.pdf', 'graph_sim_without_restr.pdf', 'graph_infected.pdf', 'graph_dead.pdf', 'graph_Inf_daily.pdf', 'graph_dead_daily.pdf', 'graph_total_infected.pdf', 'graph_test.pdf']
+        save_pdf = False
+
+        if save_pdf == True:
+            for index in range(len(names)):
+                if isinstance(outputs[index], dict):
+                    print("dict", names[index])
+                    fig = go.Figure(outputs[index])
+                    fig.write_image(names[index])
+                else:
+                    outputs[index].write_image(names[index])
+                    print("image", names[index])
         
         return outputs
         
@@ -897,22 +936,6 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
         return [{}, {}, {}, {}, {}, {}, {}, {}, {'display': 'None'}, {'display': 'None'}, {'display': 'None'}, {'display': 'None'}, {'display': 'None'}, {'display': 'None'}, {'display': 'None'}, {'display': 'None'}]
 
 
-
-# check input before enable button run simulation
-@app.callback(
-    Output('name_file', 'disabled'),
-    
-    [Input("save_result", "value"),],
-
-
-)
-
-def enable_name_file(save_result):
-    save = False
-    if save_result == [1]:
-        save = True
-
-    return (not save)
 
 
 
@@ -933,12 +956,11 @@ def enable_name_file(save_result):
         Input('initial_day_restriction','value'),
         Input('n_test','value'),
         Input('restriction_duration','value'),
-        Input("save_result", "value"),
         Input('name_file', 'value'),
     ],
 )
 
-def enable_disable_button(n_of_families, number_of_steps, n_initial_infected_nodes, incubation_days, infection_duration, R_0, initial_day_restriction, n_test, restriction_duration, save_result, name_file):
+def enable_disable_button(n_of_families, number_of_steps, n_initial_infected_nodes, incubation_days, infection_duration, R_0, initial_day_restriction, n_test, restriction_duration, name_file):
     """
     Check parameters value before enable button simulation. If any parameter of the simulation does not in (min, max) range this callback disable button and show alert message.
 
@@ -983,16 +1005,13 @@ def enable_disable_button(n_of_families, number_of_steps, n_initial_infected_nod
     
     #dbc.Input(placeholder="Invalid input...", invalid=True),
 
-    save = False
-    if save_result == [1]:
-        save = True
 
     # check if the value is in the limits (min, max) 
     if n_of_families is not None and number_of_steps is not None and n_initial_infected_nodes is not None \
         and incubation_days is not None and infection_duration is not None and R_0 is not None \
         and initial_day_restriction is not None and n_test is not None \
         and restriction_duration is not None \
-        and ((save == True and name_file != "") or (save == False)):
+        and name_file != "":
         
         return [False, False]
     else:
