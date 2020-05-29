@@ -550,7 +550,7 @@ def update_output(list_of_contents, list_of_names):
                     ),
                 ] 
         table3 = [
-                    html.H4("Testing parameters and quaratine"),
+                    html.H4("Testing and quaratine parameters"),
                     dash_table.DataTable(
                         columns=[{"name": i, "id": i} for i in ['sim_name', 'n_test', 'policy_test', 'contact_tracing_efficiency', 'contact_tracing_duration']],
                         data=table_values,

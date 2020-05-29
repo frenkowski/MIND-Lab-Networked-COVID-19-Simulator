@@ -697,30 +697,13 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
             T_pos = dump_light['positive']
 
             
-            
+
 
         
         # list of output to return
         outputs = []
 
-        graph_sim = dict({'data': [],
-                'layout': {
-                   'title': 'Contacts network model with restriction',
-                   'xaxis':{'title':'Day'},
-                   'yaxis':{'title':'Count'}
-               }
-               })
-
-        graph_sim['data'].append({'x': list(range(1, len(S_rest) +1)), 'y': S_rest,  'name': 'S', 'marker' : {'color': 'Blue'}})
-        graph_sim['data'].append({'x': list(range(1,len(E_rest) +1)), 'y': E_rest,  'name': 'E', 'marker' : {'color': 'Orange'}})
-        graph_sim['data'].append({'x': list(range(1,len(I_rest) +1)), 'y': I_rest,  'name': 'I', 'marker' : {'color': 'Red'}})
-        graph_sim['data'].append({'x': list(range(1, len(R_rest) +1)), 'y': R_rest,  'name': 'R', 'marker' : {'color': 'Green'}})
-        graph_sim['data'].append({'x': list(range(1, len(D_rest) +1)), 'y': D_rest,  'name': 'deceduti', 'marker' : {'color': 'Black'}})
-        graph_sim['data'].append({'x': list(range(1, len(tot_rest) +1)), 'y': tot_rest, 'name': 'Total'})
-        graph_sim['data'].append({'x': [initial_day_restriction, initial_day_restriction], 'y':[0, tot_rest[0]], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Begin restriction'})
-        graph_sim['data'].append({'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, tot_rest[0]], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'})
-                         
-               
+        
        
         
         path_no_rest = Path("simulator_results/" + str(name_file) + "no_restr")
@@ -739,6 +722,7 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                         n_test = 0,
                         policy_test = policy_test,
                         contact_tracing_efficiency = 0,
+                        contact_tracing_duration = 0,
                         path = str(path_no_rest),
                         use_random_seed = True,
                         seed = 0,
@@ -784,16 +768,45 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
             R = dump_light['R']
             D = dump_light['D']
             tot = dump_light['total']
+          
+        cut1 = [I_rest[i] + E_rest[i] for i in range(len(E_rest))]
+        cut2 = [I[i] + E[i] for i in range(len(E))]
+
+
+        cut_all = number_of_steps
+        for i in range(len(cut1)):
+            if cut1[i] == 0 and cut2[i] == 0:
+                cut_all = i + 1
+                break
+
+        print("livello di taglio: ", cut_all)  
+
+        graph_sim = dict({'data': [],
+                'layout': {
+                   'title': 'Contacts network model with restriction',
+                   'xaxis':{'title':'Day'},
+                   'yaxis':{'title':'Count'}
+               }
+               })
+
+        graph_sim['data'].append({'x': list(range(1, len(S_rest[:cut_all]) +1)), 'y': S_rest[:cut_all],  'name': 'S', 'marker' : {'color': 'Blue'}})
+        graph_sim['data'].append({'x': list(range(1,len(E_rest[:cut_all]) +1)), 'y': E_rest[:cut_all],  'name': 'E', 'marker' : {'color': 'Orange'}})
+        graph_sim['data'].append({'x': list(range(1,len(I_rest[:cut_all]) +1)), 'y': I_rest[:cut_all],  'name': 'I', 'marker' : {'color': 'Red'}})
+        graph_sim['data'].append({'x': list(range(1, len(R_rest[:cut_all]) +1)), 'y': R_rest[:cut_all],  'name': 'R', 'marker' : {'color': 'Green'}})
+        graph_sim['data'].append({'x': list(range(1, len(D_rest[:cut_all]) +1)), 'y': D_rest[:cut_all],  'name': 'deceduti', 'marker' : {'color': 'Black'}})
+        graph_sim['data'].append({'x': list(range(1, len(tot_rest[:cut_all]) +1)), 'y': tot_rest[:cut_all], 'name': 'Total'})
+        graph_sim['data'].append({'x': [initial_day_restriction, initial_day_restriction], 'y':[0, tot_rest[0]], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Begin restriction'})
+        graph_sim['data'].append({'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, tot_rest[0]], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'})
+                         
+               
             
 
-            
-
-        graph_sim_without_restr = {'data': [ {'x': list(range(1, len(S) +1)), 'y': S, 'name': 'S', 'marker' : {'color': 'Blue'}},
-                         {'x': list(range(1,len(E) +1)), 'y': E, 'name': 'E', 'marker' : {'color': 'Orange'}},
-                         {'x': list(range(1,len(I) +1)), 'y': I, 'name': 'I', 'marker' : {'color': 'Red'}},
-                         {'x': list(range(1, len(R) +1)), 'y': R, 'name': 'R', 'marker' : {'color': 'Green'}},
-                         {'x': list(range(1, len(D) +1)), 'y': D, 'name': 'deceduti', 'marker' : {'color': 'Black'}},
-                         {'x': list(range(1, len(tot) +1)), 'y': tot, 'name': 'Total'},
+        graph_sim_without_restr = {'data': [ {'x': list(range(1, len(S[:cut_all]) +1)), 'y': S[:cut_all], 'name': 'S', 'marker' : {'color': 'Blue'}},
+                         {'x': list(range(1,len(E[:cut_all]) +1)), 'y': E[:cut_all], 'name': 'E', 'marker' : {'color': 'Orange'}},
+                         {'x': list(range(1,len(I[:cut_all]) +1)), 'y': I[:cut_all], 'name': 'I', 'marker' : {'color': 'Red'}},
+                         {'x': list(range(1, len(R[:cut_all]) +1)), 'y': R[:cut_all], 'name': 'R', 'marker' : {'color': 'Green'}},
+                         {'x': list(range(1, len(D[:cut_all]) +1)), 'y': D[:cut_all], 'name': 'deceduti', 'marker' : {'color': 'Black'}},
+                         {'x': list(range(1, len(tot[:cut_all]) +1)), 'y': tot, 'name': 'Total'},
                          {'x': [initial_day_restriction, initial_day_restriction], 'y':[0, tot[0]], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Begin restriction'},
                          {'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, tot[0]], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'},
                          ],
@@ -803,6 +816,8 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                    'yaxis':{'title':'Count'}
                }
               }
+
+        
 
         # get total infected people (infected + exposed)
         inf_rest = []
@@ -818,8 +833,8 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                 inf_rest.append(0)
 
          # con e senza restrizioni
-        graph_infected = {'data': [{'x': list(range(1,len(I) +1)), 'y': inf, 'name': 'Without restriction'},
-                                 {'x': list(range(1,len(I) +1)), 'y': inf_rest, 'name': 'With restriction'},
+        graph_infected = {'data': [{'x': list(range(1, cut_all +1)), 'y': inf[:cut_all], 'name': 'Without restriction'},
+                                 {'x': list(range(1, cut_all +1)), 'y': inf_rest[:cut_all], 'name': 'With restriction'},
                                  {'x': [initial_day_restriction, initial_day_restriction], 'y':[0, max(inf + inf_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Begin restriction'},
                                  {'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, max(inf + inf_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'},
                          
@@ -830,6 +845,8 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                           }
                }
 
+
+
         # get all dead people 
         if len(D) > len(D_rest):
             while(len(D) > len(D_rest)):
@@ -838,8 +855,8 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
             while(len(D_rest) > len(D)):
                 D.append(D[-1])
                
-        graph_dead = {'data': [{'x': list(range(1,len(D) +1)), 'y': D, 'name': 'Without restriction'},
-                                 {'x': list(range(1,len(D) +1)), 'y': D_rest, 'name': 'With restriction'},
+        graph_dead = {'data': [{'x': list(range(1, cut_all +1)), 'y': D[:cut_all], 'name': 'Without restriction'},
+                                 {'x': list(range(1, cut_all+1)), 'y': D_rest[:cut_all], 'name': 'With restriction'},
                                  {'x': [initial_day_restriction, initial_day_restriction], 'y':[0, max(D + D_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Begin restriction'},
                                  {'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, max(D + D_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'},
                          
@@ -872,8 +889,8 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                 dead_giorn_rest.append(0)
 
  
-        graph_Inf_daily = {'data': [{'x': list(range(1,len(I) +1)), 'y': inf_giorn, 'name': 'Without restriction'},
-                                 {'x': list(range(1,len(I) +1)), 'y': inf_giorn_rest, 'name': 'With restriction'},
+        graph_Inf_daily = {'data': [{'x': list(range(1,len(I[:cut_all]) +1)), 'y': inf_giorn[:cut_all], 'name': 'Without restriction'},
+                                 {'x': list(range(1,len(I[:cut_all]) +1)), 'y': inf_giorn_rest[:cut_all], 'name': 'With restriction'},
                                  {'x': [initial_day_restriction, initial_day_restriction], 'y':[0, max(inf_giorn + inf_giorn_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Begin restriction'},
                                  {'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, max(inf_giorn + inf_giorn_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'},
                          
@@ -884,8 +901,8 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                           }
                }
                
-        graph_dead_daily = {'data': [{'x': list(range(1,len(D) +1)), 'y': dead_giorn, 'name': 'Without restriction'},
-                                 {'x': list(range(1,len(D) +1)), 'y': dead_giorn_rest, 'name': 'With restriction'},
+        graph_dead_daily = {'data': [{'x': list(range(1,len(D[:cut_all]) +1)), 'y': dead_giorn[:cut_all], 'name': 'Without restriction'},
+                                 {'x': list(range(1,len(D[:cut_all]) +1)), 'y': dead_giorn_rest[:cut_all], 'name': 'With restriction'},
                                  {'x': [initial_day_restriction, initial_day_restriction], 'y':[0, max(dead_giorn + dead_giorn_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'Inizio restrizione'},
                                  {'x': [initial_day_restriction + restriction_duration, initial_day_restriction + restriction_duration], 'y':[0, max(dead_giorn + dead_giorn_rest)], 'type': 'scatter', 'line': dict(color='rgb(55, 83, 109)', dash='dot'), 'name': 'End restriction'},
                          
@@ -914,9 +931,9 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
         
        # test made and quarantine people
 
-        graph_test = {'data': [{'x': list(range(1,len(T_rest) +1)), 'y': T_rest, 'type': 'bar', 'name': 'Test made'},
-                                 {'x': list(range(1,len(T_rest) +1)), 'y': T_pos, 'type': 'bar', 'name': 'Positive test'},
-                                 {'x': list(range(1,len(T_rest) +1)), 'y': Q_rest, 'name': 'Quarantine'},
+        graph_test = {'data': [{'x': list(range(1,len(T_rest[:cut_all]) +1)), 'y': T_rest[:cut_all], 'type': 'bar', 'name': 'Test made'},
+                                 {'x': list(range(1,len(T_rest[:cut_all]) +1)), 'y': T_pos[:cut_all], 'type': 'bar', 'name': 'Positive test'},
+                                 {'x': list(range(1,len(T_rest[:cut_all]) +1)), 'y': Q_rest[:cut_all], 'name': 'Quarantine'},
     
                                  ],
                 'layout': {'title': 'Comparison quarantine test made and positive test',
