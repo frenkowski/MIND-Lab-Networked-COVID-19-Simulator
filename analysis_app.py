@@ -316,6 +316,7 @@ def create_all_graphs(dict_upload_files, save_pdf = True):
             #hovertemplate = hovertemplate,
         ))
 
+        n_tick = int(max(x_scatter)/10)
 
         scatter_dead.update_traces(mode='markers', marker=dict(line_width=1, symbol='circle', size=16))
 
@@ -327,7 +328,7 @@ def create_all_graphs(dict_upload_files, save_pdf = True):
                 linecolor='rgb(102, 102, 102)',
                 tickfont_color='rgb(102, 102, 102)',
                 showticklabels=True,
-                dtick=10,
+                dtick=n_tick,
                 ticks='outside',
                 tickcolor='rgb(102, 102, 102)',
                 title ='Dead',
