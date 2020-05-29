@@ -173,7 +173,7 @@ form = dbc.Card(
             [   
                 
                 dbc.Label("Contact tracing efficiency:"),
-                html.Div(dcc.Slider(id="contact_tracking_efficiency", 
+                html.Div(dcc.Slider(id="contact_tracing_efficiency", 
                     value=80, min =0, max = 100, step = 10,
                     #step=None,
                     marks={
@@ -185,6 +185,14 @@ form = dbc.Card(
                     ),
                     style={'width': '100%','display': 'block'},
                 )
+            ]
+        ),
+
+        dbc.FormGroup(
+            [   
+                
+                dbc.Label("Contact tracing duration:"),
+                dbc.Input(id="contact_tracing_duration", type="number", value=14, min =0),
             ]
         ),
         
@@ -525,12 +533,13 @@ app.layout = dbc.Container(
         State('restriction_decreasing', 'value'),
         State('n_test','value'),
         State('policy_test','value'),
-        State('contact_tracking_efficiency', 'value'),
+        State('contact_tracing_efficiency', 'value'),
+        State('contact_tracing_duration', 'value'),
         State('dump_type', 'value'),
         State('name_file', 'value')]
 )
 
-def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infected_nodes, incubation_days, infection_duration, R_0, initial_day_restriction, restriction_duration, social_distance_strictness, restriction_decreasing, n_test , policy_test, contact_tracking_efficiency, dump_type, name_file):
+def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infected_nodes, incubation_days, infection_duration, R_0, initial_day_restriction, restriction_duration, social_distance_strictness, restriction_decreasing, n_test , policy_test, contact_tracing_efficiency, contact_tracing_duration, dump_type, name_file):
     """
     Execute the simulations (with and without restriction) and return graphics with comparison and statistics. Save simulation results and parameters in the folder "simulator_results/" in .pickle file format (overwrite if files already exist)
 
@@ -577,7 +586,7 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
     policy_test: string
         Strategy with which test are made. Can be Random, Degree Centrality, Betweenness Centrality
 
-    contact_tracking_efficiency: float
+    contact_tracing_efficiency: float
         The percentage of contacts successfully traced back in the past 14 days
 
 
@@ -617,7 +626,8 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                         R_0 = R_0,
                         n_test = n_test,
                         policy_test = policy_test,
-                        contact_tracking_efficiency = contact_tracking_efficiency / 100,
+                        contact_tracing_efficiency = contact_tracing_efficiency / 100,
+                        contact_tracing_duration = contact_tracing_duration,
                         path = str(path),
                         use_random_seed = True,
                         seed = 0,
@@ -728,7 +738,7 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                         R_0 = R_0,
                         n_test = 0,
                         policy_test = policy_test,
-                        contact_tracking_efficiency = 0,
+                        contact_tracing_efficiency = 0,
                         path = str(path_no_rest),
                         use_random_seed = True,
                         seed = 0,
@@ -957,10 +967,11 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
         Input('n_test','value'),
         Input('restriction_duration','value'),
         Input('name_file', 'value'),
+        Input('contact_tracing_duration', 'value')
     ],
 )
 
-def enable_disable_button(n_of_families, number_of_steps, n_initial_infected_nodes, incubation_days, infection_duration, R_0, initial_day_restriction, n_test, restriction_duration, name_file):
+def enable_disable_button(n_of_families, number_of_steps, n_initial_infected_nodes, incubation_days, infection_duration, R_0, initial_day_restriction, n_test, restriction_duration, name_file, contact_tracing_duration):
     """
     Check parameters value before enable button simulation. If any parameter of the simulation does not in (min, max) range this callback disable button and show alert message.
 

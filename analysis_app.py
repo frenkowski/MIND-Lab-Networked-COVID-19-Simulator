@@ -55,6 +55,8 @@ app.layout = dbc.Container(
     html.Br(),
     html.Div(id='table_parameters2'),
     html.Br(),
+    html.Div(id='table_parameters3'),
+    html.Br(),
     dbc.Row(children = [
         dbc.Col(dbc.Spinner(dcc.Graph(id="heatMap", style= {'display': 'block'}), color="primary"), width = 12)
     ]),
@@ -438,6 +440,7 @@ def create_all_graphs(dict_upload_files, save_pdf = True):
 @app.callback([ Output('file-list', 'children'),
                 Output('table_parameters', 'children'),
                 Output('table_parameters2', 'children'),
+                Output('table_parameters3', 'children'),
                 Output('alert_div', 'children'),
                 
                 # graph to return
@@ -483,7 +486,7 @@ def update_output(list_of_contents, list_of_names):
             alert = dbc.Alert("Can't read this files: " + str(read_error), id = 'alert_id', color="danger",  duration=6000)
         else:
             alert = []
-        return [html.Li("No files yet!"), [], [], alert, {}, {}, {}, {}, {}, {}, {}, {'display': 'None'}, {'display': 'None'}, {'display': 'None'}, {'display': 'None'}, {'display':'None'}, {'display':'None'},{'display':'None'}]
+        return [html.Li("No files yet!"), [], [], [], alert, {}, {}, {}, {}, {}, {}, {}, {'display': 'None'}, {'display': 'None'}, {'display': 'None'}, {'display': 'None'}, {'display':'None'}, {'display':'None'},{'display':'None'}]
     
     else:
 
@@ -503,7 +506,7 @@ def update_output(list_of_contents, list_of_names):
             table_values.append(dict_upload_files[file]['parameters'])
         
         table = [   
-                    html.H4("Parameters simulation"),
+                    html.H4("Simulation parameters"),
                     dash_table.DataTable(
                         columns=[{"name": i, "id": i} for i in ['sim_name','R_0', 'n_of_families', 'number_of_steps', 'incubation_days', 'infection_duration', 'n_initial_infected_nodes']],
                         data= table_values,
@@ -524,9 +527,9 @@ def update_output(list_of_contents, list_of_names):
                     ),
                 ]
         table2 = [  
-                    html.H4("Parameters restriction and test"),
+                    html.H4("Restriction parameters"),
                     dash_table.DataTable(
-                        columns=[{"name": i, "id": i} for i in ['sim_name', 'initial_day_restriction', 'restriction_duration', 'social_distance_strictness', 'restriction_decreasing', 'n_test', 'policy_test', 'contact_tracking_efficiency']],
+                        columns=[{"name": i, "id": i} for i in ['sim_name', 'initial_day_restriction', 'restriction_duration', 'social_distance_strictness', 'restriction_decreasing']],
                         data=table_values,
                         #style_cell={'textAlign': 'left'},
                         #style_as_list_view=True,
@@ -545,10 +548,35 @@ def update_output(list_of_contents, list_of_names):
                         sort_action='native',
                         sort_mode="multi",
                     ),
-                ]   
+                ] 
+        table3 = [
+                    html.H4("Testing parameters and quaratine"),
+                    dash_table.DataTable(
+                        columns=[{"name": i, "id": i} for i in ['sim_name', 'n_test', 'policy_test', 'contact_tracing_efficiency', 'contact_tracing_duration']],
+                        data=table_values,
+                        #style_cell={'textAlign': 'left'},
+                        #style_as_list_view=True,
+                        style_as_list_view=True,
+                        style_cell={'padding': '5px'},
+                        style_header={
+                            'backgroundColor': 'white',
+                            'fontWeight': 'bold'
+                        },
+                        style_data_conditional=[
+                        {
+                                'if': {'row_index': 'odd'},
+                                'backgroundColor': 'rgb(248, 248, 248)'
+                            }
+                        ],
+                        sort_action='native',
+                        sort_mode="multi",
+                    ),
+                        
+
+        ]  
         
         #returns
-        return [list_name, table, table2, alert, graph_infected, graph_dead, graph_tot_inf, graph_simulation_len, heatMap, scatter_dead, stack_bar, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}]
+        return [list_name, table, table2, table3, alert, graph_infected, graph_dead, graph_tot_inf, graph_simulation_len, heatMap, scatter_dead, stack_bar, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}]
 
 
             
