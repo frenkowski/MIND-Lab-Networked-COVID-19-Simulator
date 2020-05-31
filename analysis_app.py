@@ -73,8 +73,11 @@ app.layout = dbc.Container(
     ]),
     html.Br(),
     dbc.Row(children = [
-        dbc.Col(dbc.Spinner(dcc.Graph(id="scatter_dead", style= {'display': 'block'}), color="primary"), width = 6),
-        dbc.Col(dbc.Spinner(dcc.Graph(id="stack_bar", style= {'display': 'block'}), color="primary"), width = 6)
+        dbc.Col(dbc.Spinner(dcc.Graph(id="scatter_dead", style= {'display': 'block'}), color="primary"), width = 12),
+    ]),
+    html.Br(),
+    dbc.Row(children = [
+        dbc.Col(dbc.Spinner(dcc.Graph(id="stack_bar", style= {'display': 'block'}), color="primary"), width = 8)
     ]),
     ],
 
@@ -174,7 +177,6 @@ def normalize_data_to_plot(dict_upload_files):
     norm_dict_upload_files ={}
 
     for file in dict_upload_files.keys():
-        print("file", file)
         # full dump
         if len(dict_upload_files[file].keys()) == 2:
             norm_dict_upload_files[file] = compute_network_history_from_full_dump(dict_upload_files[file])
@@ -310,15 +312,17 @@ def create_all_graphs(dict_upload_files, save_pdf = True):
             text=z_scatter,
             name='',
             marker=dict(
-                color='#2c82ff',
-                line_color='#2c82ff',
+                color= x_scatter,
+                
+                #'#2c82ff',
+                #line_color='#2c82ff',
             ),
-            #hovertemplate = hovertemplate,
+            mode = "markers"
         ))
 
         n_tick = int(max(x_scatter)/10)
 
-        scatter_dead.update_traces(mode='markers', marker=dict(line_width=1, symbol='circle', size=16))
+        scatter_dead.update_traces(mode='markers', marker=dict(line_width=1, symbol='circle', size=16, cmax = max(x_scatter), cmin = min(x_scatter),  colorscale= 'YlOrRd', colorbar=dict(title="")))
 
         scatter_dead.update_layout(
             title="Comparison dead ",
@@ -470,7 +474,7 @@ def create_all_graphs(dict_upload_files, save_pdf = True):
 def update_output(list_of_contents, list_of_names):
     read_error = []
     dict_upload_files = {}
-    print("list_of_names: ", list_of_names)
+    #print("list_of_names: ", list_of_names)
     
     if list_of_contents is not None:
         for name, data in zip(list_of_names, list_of_contents):
