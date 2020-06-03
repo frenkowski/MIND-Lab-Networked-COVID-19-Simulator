@@ -779,8 +779,6 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                 cut_all = i + 1
                 break
 
-        print("livello di taglio: ", cut_all)  
-
         graph_sim = dict({'data': [],
                 'layout': {
                    'title': 'Contacts network model with restriction',
@@ -949,12 +947,10 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
         if save_pdf == True:
             for index in range(len(names)):
                 if isinstance(outputs[index], dict):
-                    print("dict", names[index])
                     fig = go.Figure(outputs[index])
                     fig.write_image(names[index])
                 else:
                     outputs[index].write_image(names[index])
-                    print("image", names[index])
         
         return outputs
         
