@@ -26,7 +26,7 @@ age_fat_rate =[prob*100 for prob in age_fat_rate]
 
 avg_fat = stat.mean(age_fat_rate)
 
-
+gitlink = "https://gitlab.com/migliouni/ctns_simulator"
 
 
 # begin layout app
@@ -43,7 +43,7 @@ form = dbc.Card(
         dbc.FormGroup(
             [
                 dbc.Label("Number of families: "),
-                dbc.Input(id="n_of_families", type="number", value=500, min = 10),
+                dbc.Input(id="n_of_families", type="number", value=150, min = 10, max = 150),
             ]
         ),
 
@@ -57,7 +57,7 @@ form = dbc.Card(
         dbc.FormGroup(
             [
                 dbc.Label("Simulation days:"),
-                dbc.Input(id="number_of_steps", type="number", value=150, min = 10),
+                dbc.Input(id="number_of_steps", type="number", value=150, min = 10, max = 150),
             ]
         ),
 
@@ -91,7 +91,7 @@ form = dbc.Card(
             [   
                 
                 dbc.Label("Intial day restriction:"),
-                dbc.Input(id="initial_day_restriction", type="number", value=35, min = 1),
+                dbc.Input(id="initial_day_restriction", type="number", value=25, min = 1),
             ]
         ),
         
@@ -247,6 +247,15 @@ tab1_content = dbc.Card(
                 dbc.Col([
                     html.Br(),
                     html.H3("Simulator tab"),
+                    html.Br(),
+                    dbc.Alert(
+                        [
+                            "This is a light version only for demo. In this version the number of family and step are limited at 150 for not exceeding heroku timeout. Full code without limitation is available at:  ",
+                            html.A("link code on git", href=gitlink, className="alert-link"),
+                        ],
+                        color="warning",
+                    ),
+                    html.Br(),
                     html.Br(),
                     html.P('In this tab you can start the Covid-19 contact simulator. There are different initial parameters that you can set. furthermore, different results are shown in output. We now provide a brief presentation of these components:'),
                     html.Br(),
