@@ -147,7 +147,7 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                         contact_tracing_efficiency = contact_tracing_efficiency / 100,
                         contact_tracing_duration = contact_tracing_duration,
                         path = str(path),
-                        use_random_seed = True,
+                        #use_random_seed = True,
                         seed = 0,
                         dump_type = dump_type,
                         )
@@ -242,7 +242,7 @@ def updateSimulation(n_clicks, n_of_families, number_of_steps, n_initial_infecte
                         contact_tracing_efficiency = 0,
                         contact_tracing_duration = 0,
                         path = str(path_no_rest),
-                        use_random_seed = True,
+                        #use_random_seed = True,
                         seed = 0,
                         dump_type = dump_type,
                         )
